@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook管理系统 - 设置</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .card-header h2 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-header p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .info-section {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 5px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .info-section h3 {
+            color: #1976d2;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-section code {
+            background: #263238;
+            color: #4fc3f7;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .examples {
+            margin-top: 1rem;
+        }
+        
+        .example-item {
+            background: #f5f5f5;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ Webhook设置</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('settings') }}" class="active">设置</a>
+            <a href="{{ url_for('logout') }}">登出</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="settings-card">
+            <div class="card-header">
+                <h2>Webhook配置</h2>
+                <p>配置Webhook接收参数和安全设置</p>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="secret">Webhook密钥 (Secret)</label>
+                        <input type="text" id="secret" name="secret" value="{{ settings.secret }}" placeholder="输入用于验证请求的密钥">
+                        <div class="help-text">
+                            用于验证webhook请求的签名，支持HMAC-SHA256验证。留空则不验证签名。
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enabled" name="enabled" {% if settings.enabled %}checked{% endif %}>
+                            <label for="enabled">启用Webhook接收</label>
+                        </div>
+                        <div class="help-text">
+                            关闭后将拒绝所有Webhook请求
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="event_filter">事件过滤器</label>
+                        <input type="text" id="event_filter" name="event_filter" value="{{ settings.event_filter }}" placeholder="例如: push, pull_request">
+                        <div class="help-text">
+                            只接收包含指定关键词的事件类型，留空则接收所有事件。检查请求头 X-Event-Type 或数据中的 event 字段。
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">💾 保存设置</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3>📡 Webhook端点信息</h3>
+            <p><strong>URL:</strong> <code>{{ request.url_root }}webhook</code></p>
+            <p><strong>方法:</strong> <code>POST</code></p>
+            <p><strong>Content-Type:</strong> <code>application/json</code></p>
+            
+            <div class="examples">
+                <h4>使用示例:</h4>
+                
+                <div class="example-item">
+                    <strong>基础请求:</strong><br>
+                    curl -X POST {{ request.url_root }}webhook \<br>
+                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                    &nbsp;&nbsp;-d '{"event": "test", "message": "Hello Webhook"}'
+                </div>
+                
+                <div class="example-item">
+                    <strong>带签名验证:</strong><br>
+                    curl -X POST {{ request.url_root }}webhook \<br>
+                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                    &nbsp;&nbsp;-H "X-Hub-Signature-256: sha256=签名值" \<br>
+                    &nbsp;&nbsp;-d '{"event": "push", "data": "some data"}'
+                </div>
+                
+                <div class="example-item">
+                    <strong>GitHub风格Webhook:</strong><br>
+                    curl -X POST {{ request.url_root }}webhook \<br>
+                    &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                    &nbsp;&nbsp;-H "X-Event-Type: push" \<br>
+                    &nbsp;&nbsp;-H "X-Hub-Signature-256: sha256=签名值" \<br>
+                    &nbsp;&nbsp;-d '{"action": "opened", "repository": {...}}'
+                </div>
+            </div>
+            
+            <h4 style="margin-top: 1rem;">🔒 签名验证说明:</h4>
+            <p>如果设置了密钥，请求需要包含 <code>X-Hub-Signature-256</code> 或 <code>X-Signature</code> 头部，值为 HMAC-SHA256 签名。</p>
+            <p>签名计算: <code>hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()</code></p>
+        </div>
+    </div>
+</body>
+</html>

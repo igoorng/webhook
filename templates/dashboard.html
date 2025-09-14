@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook管理系统 - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .controls {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .messages-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .messages-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+        }
+        
+        .message-item {
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .message-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-id {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .message-timestamp {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .message-source {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+        
+        .message-content {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .json-viewer {
+            background: #263238;
+            color: #ffffff;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .json-key {
+            color: #82b1ff;
+        }
+        
+        .json-string {
+            color: #c3e88d;
+        }
+        
+        .json-number {
+            color: #f78c6c;
+        }
+        
+        .json-boolean {
+            color: #ff9cac;
+        }
+        
+        .json-null {
+            color: #546e7a;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            gap: 0.5rem;
+        }
+        
+        .pagination a, .pagination span {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #667eea;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .pagination .current {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .pagination .disabled {
+            color: #ccc;
+            pointer-events: none;
+        }
+        
+        .filter-controls {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        .real-time-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 999;
+            display: none;
+            transition: all 0.3s ease;
+        }
+        
+        .real-time-indicator.connected {
+            display: block;
+            background: #4CAF50;
+        }
+        
+        .real-time-indicator:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .real-time-indicator.connected {
+            display: block;
+            background: #4CAF50;
+        }
+        
+        .real-time-indicator.disconnected {
+            display: block;
+            background: #f44336;
+        }
+        
+        .new-message-notification {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1001;
+            max-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .message-item.new-message {
+            animation: highlightNew 2s ease-out;
+        }
+        
+        @keyframes highlightNew {
+            0% {
+                background-color: #e3f2fd;
+                border-left: 4px solid #2196F3;
+            }
+            100% {
+                background-color: white;
+                border-left: none;
+            }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .alert {
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <!-- 实时连接状态指示器 -->
+    <div id="real-time-indicator" class="real-time-indicator">
+        <span id="status-text">🔗 实时连接中...</span>
+    </div>
+    
+    <!-- 新消息通知 -->
+    <div id="message-notification" class="new-message-notification" style="display: none;">
+        <div id="notification-content"></div>
+    </div>
+    
+    <div class="header">
+        <h1>📊 Webhook Dashboard</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('settings') }}">设置</a>
+            <a href="{{ url_for('logout') }}">登出</a>
+        </div>
+    </div>
+    
+    <div class="container" 
+         data-current-page="{{ pagination.current_page }}" 
+         data-include-archived="{{ 'true' if include_archived else 'false' }}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ message_count }}</div>
+                <div class="stat-label">总消息数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="recent-count">
+                    {% set recent_count = messages|selectattr('timestamp')|list|length %}
+                    {{ recent_count if recent_count <= 24 else 24 }}
+                </div>
+                <div class="stat-label">最近消息</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ '/webhook' }}</div>
+                <div class="stat-label">Webhook端点</div>
+            </div>
+        </div>
+        
+        <div class="filter-controls">
+            <div>
+                📄 <strong>消息过滤:</strong>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="include-archived" {{ 'checked' if include_archived else '' }}>
+                <span class="toggle-slider"></span>
+            </label>
+            <span>包含归档消息</span>
+            
+            <div style="margin-left: auto;">
+                <strong>当前活跃:</strong> {{ message_count }} 条
+                <span data-archived-info>
+                    {% if archived_files %}
+                        | <strong>归档文件:</strong> {{ archived_files|length }} 个
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div>
+                <button class="btn btn-primary" onclick="refreshMessages()">🔄 刷新</button>
+                <button class="btn btn-primary" onclick="autoRefreshToggle()" id="auto-refresh-btn" style="background-color: #e74c3c;">⏹️ 停止刷新</button>
+            </div>
+            <button class="btn btn-danger" onclick="clearMessages()">🗑️ 清空消息</button>
+        </div>
+        
+        <div class="messages-container">
+            <div class="messages-header">
+                📨 接收的Webhook消息
+            </div>
+            
+            <div id="messages-list">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message-item">
+                        <div class="message-header">
+                            <span class="message-id">#{{ message.id }}</span>
+                            <span class="message-timestamp">{{ message.timestamp }}</span>
+                            <span class="message-source">{{ message.source_ip }}</span>
+                        </div>
+                        
+                        {% if message.error %}
+                            <div style="color: #e74c3c; font-weight: bold; margin-bottom: 0.5rem;">
+                                ❌ 错误: {{ message.error }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="message-content">
+                            {% if message.error %}
+                                <strong>错误信息:</strong><br>
+                                <span style="color: #e74c3c;">{{ message.error }}</span><br><br>
+                                <strong>原始数据:</strong><br>
+                                <div class="json-viewer">{{ message.data }}</div>
+                            {% else %}
+                                <strong>Data:</strong><br>
+                                {% if message.data %}
+                                    <div class="json-viewer" data-json='{{ message.data | tojson }}'></div>
+                                {% else %}
+                                    <div class="json-viewer">无数据</div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i>📭</i>
+                        <h3>暂无消息</h3>
+                        <p>Webhook端点: <code>{{ request.url_root }}webhook</code></p>
+                        <p>发送POST请求到上述地址来测试</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 分页导航 -->
+        {% if pagination.total_pages > 1 %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="?page=1{{ '&archived=true' if include_archived else '' }}">« 首页</a>
+                <a href="?page={{ pagination.current_page - 1 }}{{ '&archived=true' if include_archived else '' }}">‹ 上页</a>
+            {% else %}
+                <span class="disabled">« 首页</span>
+                <span class="disabled">‹ 上页</span>
+            {% endif %}
+            
+            {% for page_num in range(1, pagination.total_pages + 1) %}
+                {% if page_num == pagination.current_page %}
+                    <span class="current">{{ page_num }}</span>
+                {% elif page_num <= 3 or page_num > pagination.total_pages - 3 or (page_num >= pagination.current_page - 2 and page_num <= pagination.current_page + 2) %}
+                    <a href="?page={{ page_num }}{{ '&archived=true' if include_archived else '' }}">{{ page_num }}</a>
+                {% elif page_num == 4 or page_num == pagination.total_pages - 3 %}
+                    <span>...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="?page={{ pagination.current_page + 1 }}{{ '&archived=true' if include_archived else '' }}">下页 ›</a>
+                <a href="?page={{ pagination.total_pages }}{{ '&archived=true' if include_archived else '' }}">末页 »</a>
+            {% else %}
+                <span class="disabled">下页 ›</span>
+                <span class="disabled">末页 »</span>
+            {% endif %}
+        </div>
+        
+        <div style="text-align: center; color: #666; margin: 1rem 0;">
+            显示 {{ (pagination.current_page - 1) * pagination.page_size + 1 }} - 
+            {{ [pagination.current_page * pagination.page_size, pagination.total_messages] | min }} 
+            共 {{ pagination.total_messages }} 条消息
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Webhook Dashboard JavaScript功能
+        let autoRefreshInterval = null;
+        let isAutoRefresh = true;  // 默认开启自动刷新
+        let currentPage = parseInt(document.querySelector('.container').dataset.currentPage) || 1;
+        let includeArchived = document.querySelector('.container').dataset.includeArchived === 'true';
+        let eventSource = null;
+        let realTimeEnabled = false;
+        
+        // JSON语法高亮函数
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+        
+        // 实时消息推送功能
+        function initRealTimeConnection() {
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource('/api/stream');
+            
+            eventSource.onopen = function() {
+                console.log('实时连接已建立');
+                updateConnectionStatus('connected');
+                realTimeEnabled = true;
+            };
+            
+            eventSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'new_message') {
+                        handleNewMessage(data.data);
+                    } else if (data.type === 'heartbeat') {
+                        // 心跳保持连接
+                        console.log('心跳');
+                    }
+                } catch (e) {
+                    console.error('解析实时消息失败:', e);
+                }
+            };
+            
+            eventSource.onerror = function(event) {
+                console.error('实时连接错误:', event);
+                updateConnectionStatus('disconnected');
+                realTimeEnabled = false;
+                
+                // 5秒后重连
+                setTimeout(initRealTimeConnection, 5000);
+            };
+        }
+        
+        function updateConnectionStatus(status) {
+            const indicator = document.getElementById('real-time-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            indicator.className = 'real-time-indicator ' + status;
+            
+            if (status === 'connected') {
+                statusText.textContent = '🔗 实时连接正常';
+            } else {
+                statusText.textContent = '⚠️ 连接中断';
+            }
+        }
+        
+        function handleNewMessage(message) {
+            console.log('收到新消息:', message);
+            
+            // 更新统计数据
+            updateMessageStats();
+            
+            // 只在第一页且非归档模式下显示新消息
+            if (currentPage === 1 && !includeArchived) {
+                // 显示通知
+                showNewMessageNotification(message);
+                
+                // 在列表顶部添加新消息
+                addNewMessageToList(message);
+            } else {
+                // 其他页面只显示通知
+                showNewMessageNotification(message);
+            }
+        }
+        
+        function updateMessageStats() {
+            // 更新消息统计数据
+            // 获取最新的统计数据
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // 更新总消息数
+                    const totalCountElement = document.querySelector('.stat-number');
+                    if (totalCountElement && data.total_messages !== undefined) {
+                        totalCountElement.textContent = data.total_messages;
+                        
+                        // 添加更新动画效果
+                        totalCountElement.style.transform = 'scale(1.1)';
+                        totalCountElement.style.color = '#4CAF50';
+                        
+                        setTimeout(() => {
+                            totalCountElement.style.transform = 'scale(1)';
+                            totalCountElement.style.color = '#667eea';
+                        }, 300);
+                    }
+                    
+                    // 更新最近消息数
+                    const recentCountElement = document.getElementById('recent-count');
+                    if (recentCountElement && data.recent_messages !== undefined) {
+                        recentCountElement.textContent = data.recent_messages;
+                    }
+                    
+                    // 更新归档文件数
+                    if (data.archived_files !== undefined) {
+                        updateArchivedInfo(data.archived_files);
+                    }
+                })
+                .catch(error => {
+                    console.error('更新统计数据失败:', error);
+                });
+        }
+        
+        function updateArchivedInfo(archivedCount) {
+            // 更新归档信息显示
+            const filterControls = document.querySelector('.filter-controls');
+            if (filterControls) {
+                const archivedInfo = filterControls.querySelector('[data-archived-info]');
+                if (archivedInfo) {
+                    if (archivedCount > 0) {
+                        archivedInfo.innerHTML = `| <strong>归档文件:</strong> ${archivedCount} 个`;
+                        archivedInfo.style.display = 'inline';
+                    } else {
+                        archivedInfo.style.display = 'none';
+                    }
+                }
+            }
+        }
+        
+        function showNewMessageNotification(message) {
+            const notification = document.getElementById('message-notification');
+            const content = document.getElementById('notification-content');
+            
+            let messagePreview = '';
+            if (message.error) {
+                messagePreview = `错误: ${message.error}`;
+            } else if (message.data && typeof message.data === 'object') {
+                messagePreview = `事件: ${message.data.event || '未知'}`;
+            } else {
+                messagePreview = '新消息';
+            }
+            
+            content.innerHTML = `
+                <strong>📨 新Webhook消息</strong><br>
+                <small>${message.timestamp}</small><br>
+                ${messagePreview}
+            `;
+            
+            notification.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        function addNewMessageToList(message) {
+            const messagesList = document.getElementById('messages-list');
+            const emptyState = messagesList.querySelector('.empty-state');
+            
+            // 如果是空状态，先清除
+            if (emptyState) {
+                messagesList.innerHTML = '';
+            }
+            
+            // 创建新消息元素
+            const messageHtml = createMessageElement(message);
+            
+            // 插入到列表顶部
+            messagesList.insertAdjacentHTML('afterbegin', messageHtml);
+            
+            // 给新消息添加高亮效果
+            const newItem = messagesList.querySelector('.message-item');
+            newItem.classList.add('new-message');
+            
+            // 限制显示数量，移除多余的消息
+            const items = messagesList.querySelectorAll('.message-item');
+            if (items.length > 20) {
+                items[items.length - 1].remove();
+            }
+        }
+        
+        function createMessageElement(message) {
+            let contentHtml = '';
+            
+            if (message.error) {
+                contentHtml = `
+                    <strong>错误信息:</strong><br>
+                    <span style="color: #e74c3c;">${message.error}</span><br><br>
+                    <strong>原始数据:</strong><br>
+                    <div class="json-viewer">${message.data}</div>
+                `;
+            } else {
+                const jsonData = message.data ? JSON.stringify(message.data, null, 2) : '无数据';
+                contentHtml = `
+                    <strong>Data:</strong><br>
+                    <div class="json-viewer">${message.data ? syntaxHighlight(jsonData) : '无数据'}</div>
+                `;
+            }
+            
+            return `
+                <div class="message-item">
+                    <div class="message-header">
+                        <span class="message-id">#${message.id}</span>
+                        <span class="message-timestamp">${message.timestamp}</span>
+                        <span class="message-source">${message.source_ip}</span>
+                    </div>
+                    
+                    ${message.error ? `
+                        <div style="color: #e74c3c; font-weight: bold; margin-bottom: 0.5rem;">
+                            ❌ 错误: ${message.error}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="message-content">
+                        ${contentHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 刷新消息
+        function refreshMessages() {
+            const params = new URLSearchParams();
+            params.set('page', currentPage);
+            if (includeArchived) {
+                params.set('archived', 'true');
+            }
+            
+            fetch('/api/messages?' + params.toString())
+                .then(response => response.json())
+                .then(data => {
+                    updateMessagesDisplay(data.messages);
+                    updatePagination(data.pagination);
+                    // 同时更新统计数据
+                    updateMessageStats();
+                })
+                .catch(error => {
+                    console.error('刷新失败:', error);
+                    alert('刷新失败: ' + error.message);
+                });
+        }
+        
+        // 更新消息显示
+        function updateMessagesDisplay(messages) {
+            const messagesList = document.getElementById('messages-list');
+            
+            if (messages.length === 0) {
+                messagesList.innerHTML = `
+                    <div class="empty-state">
+                        <i>📭</i>
+                        <h3>暂无消息</h3>
+                        <p>Webhook端点: <code>${window.location.origin}/webhook</code></p>
+                        <p>发送POST请求到上述地址来测试</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            messagesList.innerHTML = messages.map(message => {
+                let contentHtml = '';
+                
+                if (message.error) {
+                    contentHtml = `
+                        <strong>错误信息:</strong><br>
+                        <span style="color: #e74c3c;">${message.error}</span><br><br>
+                        <strong>原始数据:</strong><br>
+                        <div class="json-viewer">${message.data}</div>
+                    `;
+                } else {
+                    const jsonData = message.data ? JSON.stringify(message.data, null, 2) : '无数据';
+                    contentHtml = `
+                        <strong>Data:</strong><br>
+                        <div class="json-viewer">${message.data ? syntaxHighlight(jsonData) : '无数据'}</div>
+                    `;
+                }
+                
+                return `
+                    <div class="message-item">
+                        <div class="message-header">
+                            <span class="message-id">#${message.id}</span>
+                            <span class="message-timestamp">${message.timestamp}</span>
+                            <span class="message-source">${message.source_ip}</span>
+                        </div>
+                        
+                        ${message.error ? `
+                            <div style="color: #e74c3c; font-weight: bold; margin-bottom: 0.5rem;">
+                                ❌ 错误: ${message.error}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="message-content">
+                            ${contentHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 更新分页信息（暂时只记录日志）
+        function updatePagination(pagination) {
+            console.log('分页信息:', pagination);
+        }
+        
+        // 自动刷新切换
+        function autoRefreshToggle() {
+            const btn = document.getElementById('auto-refresh-btn');
+            
+            if (isAutoRefresh) {
+                clearInterval(autoRefreshInterval);
+                btn.textContent = '⏱️ 自动刷新';
+                btn.style.backgroundColor = '#667eea';
+                isAutoRefresh = false;
+            } else {
+                autoRefreshInterval = setInterval(refreshMessages, 5000);
+                btn.textContent = '⏹️ 停止刷新';
+                btn.style.backgroundColor = '#e74c3c';
+                isAutoRefresh = true;
+            }
+        }
+        
+        // 清空消息
+        function clearMessages() {
+            if (!confirm('确定要清空所有消息吗？')) return;
+            
+            fetch('/api/clear_messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('清空失败:', error);
+                alert('清空失败: ' + error.message);
+            });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化实时连接
+            initRealTimeConnection();
+            
+            // 初始更新统计数据
+            updateMessageStats();
+            
+            // 自动启动自动刷新（默认开启）
+            if (isAutoRefresh) {
+                autoRefreshInterval = setInterval(refreshMessages, 5000);
+                console.log('自动刷新已启动');
+            }
+            
+            // 归档开关事件
+            const archiveToggle = document.getElementById('include-archived');
+            if (archiveToggle) {
+                archiveToggle.addEventListener('change', function() {
+                    includeArchived = this.checked;
+                    currentPage = 1; // 重置到第一页
+                    
+                    // 更新URL
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set('page', '1');
+                    if (includeArchived) {
+                        newUrl.searchParams.set('archived', 'true');
+                    } else {
+                        newUrl.searchParams.delete('archived');
+                    }
+                    window.location.href = newUrl.toString();
+                });
+            }
+            
+            // 初始化JSON高亮
+            document.querySelectorAll('.json-viewer').forEach((element, index) => {
+                const jsonData = element.getAttribute('data-json');
+                const jsonContent = element.textContent || element.innerText;
+                
+                if (jsonData) {
+                    // 如果有data-json属性，使用该数据
+                    try {
+                        const parsed = JSON.parse(jsonData);
+                        const formatted = JSON.stringify(parsed, null, 2);
+                        element.innerHTML = syntaxHighlight(formatted);
+                    } catch (e) {
+                        element.innerHTML = syntaxHighlight(jsonData);
+                    }
+                } else if (jsonContent && jsonContent.trim()) {
+                    // 否则使用文本内容
+                    try {
+                        const parsed = JSON.parse(jsonContent);
+                        const formatted = JSON.stringify(parsed, null, 2);
+                        element.innerHTML = syntaxHighlight(formatted);
+                    } catch (e) {
+                        // 如果不是有效JSON，保持原样但应用语法高亮
+                        element.innerHTML = syntaxHighlight(jsonContent);
+                    }
+                }
+            });
+        });
+        
+        // 页面关闭时清理连接
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>
