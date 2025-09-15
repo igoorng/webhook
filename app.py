@@ -112,7 +112,29 @@ def archive_old_messages():
         print(f"归档消息失败: {e}")
         return False
 
-def get_archived_files():
+def get_next_message_id():
+    """获取下一个消息ID，考虑所有消息（包括归档的）"""
+    max_id = 0
+    
+    # 1. 检查内存中的活跃消息
+    if webhook_messages:
+        max_id = max(max_id, max(msg.get('id', 0) for msg in webhook_messages))
+    
+    # 2. 检查所有归档文件中的消息
+    try:
+        archived_files = get_archived_files()
+        for archive_info in archived_files:
+            try:
+                with open(archive_info['file'], 'r', encoding='utf-8') as f:
+                    archived_messages = json.load(f)
+                    if archived_messages:
+                        max_id = max(max_id, max(msg.get('id', 0) for msg in archived_messages))
+            except Exception as e:
+                print(f"读取归档文件 {archive_info['file']} 失败: {e}")
+    except Exception as e:
+        print(f"检查归档文件失败: {e}")
+    
+    return max_id + 1
     """获取所有归档文件列表"""
     try:
         archive_files = []
@@ -359,9 +381,12 @@ def webhook_endpoint():
             if webhook_settings['event_filter'] not in event_type:
                 return jsonify({'message': 'Event filtered'}), 200
         
+        # 生成唯一ID（考虑所有消息包括归档的）
+        message_id = get_next_message_id()
+        
         # 保存消息（只保存data数据，不保存请求头）
         message = {
-            'id': len(webhook_messages) + 1,
+            'id': message_id,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'data': data,
             'source_ip': request.remote_addr
@@ -369,8 +394,8 @@ def webhook_endpoint():
         
         webhook_messages.insert(0, message)  # 最新消息在前
         
-        # 限制消息数量（保留最近1000条）
-        if len(webhook_messages) > 1000:
+        # 使用配置文件中的限制数量，而不是硬编码的1000
+        if len(webhook_messages) > MAX_ACTIVE_MESSAGES:
             webhook_messages.pop()
         
         # 保存到文件
@@ -382,8 +407,11 @@ def webhook_endpoint():
         return jsonify({'message': 'Webhook received successfully', 'id': message['id']}), 200
         
     except Exception as e:
+        # 生成唯一ID（考虑所有消息包括归档的）
+        error_id = get_next_message_id()
+        
         error_message = {
-            'id': len(webhook_messages) + 1,
+            'id': error_id,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'error': str(e),
             'data': payload.decode('utf-8', errors='ignore'),
