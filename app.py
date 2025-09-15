@@ -112,29 +112,7 @@ def archive_old_messages():
         print(f"归档消息失败: {e}")
         return False
 
-def get_next_message_id():
-    """获取下一个消息ID，考虑所有消息（包括归档的）"""
-    max_id = 0
-    
-    # 1. 检查内存中的活跃消息
-    if webhook_messages:
-        max_id = max(max_id, max(msg.get('id', 0) for msg in webhook_messages))
-    
-    # 2. 检查所有归档文件中的消息
-    try:
-        archived_files = get_archived_files()
-        for archive_info in archived_files:
-            try:
-                with open(archive_info['file'], 'r', encoding='utf-8') as f:
-                    archived_messages = json.load(f)
-                    if archived_messages:
-                        max_id = max(max_id, max(msg.get('id', 0) for msg in archived_messages))
-            except Exception as e:
-                print(f"读取归档文件 {archive_info['file']} 失败: {e}")
-    except Exception as e:
-        print(f"检查归档文件失败: {e}")
-    
-    return max_id + 1
+def get_archived_files():
     """获取所有归档文件列表"""
     try:
         archive_files = []
